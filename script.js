@@ -355,8 +355,8 @@ function showAddModal() {
     document.getElementById('fGender').value = 'female';
     document.getElementById('fDate').value = todayStr();
     document.getElementById('fSource').value = '';
-    document.getElementById('fPosition').value = 'center';
-    document.getElementById('fPosHelper').value = '';
+    document.getElementById('fPosition').value = 'center 50%';
+    updateSliderFromPosition('center 50%');
     document.getElementById('fImageUrl').value = '';
     document.getElementById('fPrompt').value = '';
     updatePreview();
@@ -375,7 +375,7 @@ function showEditModal(idx) {
     document.getElementById('fDate').value = item.date || '';
     document.getElementById('fSource').value = item.source ? (item.source.url || '') : '';
     document.getElementById('fPosition').value = item.position || '';
-    document.getElementById('fPosHelper').value = '';
+    updateSliderFromPosition(item.position || '');
     document.getElementById('fImageUrl').value = item.imageUrl || '';
     document.getElementById('fPrompt').value = item.prompt || '';
     updatePreview();
@@ -387,12 +387,35 @@ function closeEdit() {
     editIdx = null;
 }
 
-function applyPosHelper() {
-    const helper = document.getElementById('fPosHelper');
-    if (helper.value) {
-        document.getElementById('fPosition').value = helper.value;
-        updatePreview();
+function applyPosSlider() {
+    const slider = document.getElementById('fPosSlider');
+    const val = 100 - parseInt(slider.value, 10);
+    document.getElementById('fPosition').value = `center ${val}%`;
+    updatePreview();
+}
+
+function updateSliderFromPosition(pos) {
+    const slider = document.getElementById('fPosSlider');
+    if (!pos || pos === 'center') {
+        slider.value = 50;
+    } else if (pos === 'center top' || pos === 'top') {
+        slider.value = 100;
+    } else if (pos === 'center bottom' || pos === 'bottom') {
+        slider.value = 0;
+    } else {
+        const match = pos.match(/center (\d+)%/);
+        if (match) {
+            const raw = 100 - parseInt(match[1], 10);
+            slider.value = Math.round(raw / 10) * 10;
+        } else {
+            slider.value = 50;
+        }
     }
+}
+
+function updateSliderFromInput() {
+    const pos = document.getElementById('fPosition').value.trim();
+    updateSliderFromPosition(pos);
 }
 
 function updatePreview() {

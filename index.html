@@ -120,9 +120,20 @@
         <div class="modal-split">
           <div class="modal-left">
             <div class="form-group">
-              <label>Image Preview</label>
-              <div class="img-preview-box" id="imgPreviewBox">
-                <span class="placeholder">Enter image URL to preview</span>
+              <label>Image Preview & Position</label>
+              <div class="preview-container">
+                <div class="img-preview-box" id="imgPreviewBox">
+                  <span class="placeholder">Enter image URL to preview</span>
+                </div>
+                <div class="slider-wrapper" title="Adjust vertical position">
+                  <input type="range" id="fPosSlider" class="pos-slider" min="0" max="100" step="10"
+                    oninput="applyPosSlider()">
+                  <div class="slider-labels">
+                    <span>T</span>
+                    <span>C</span>
+                    <span>B</span>
+                  </div>
+                </div>
               </div>
             </div>
           </div>
@@ -153,25 +164,8 @@
               </div>
               <div class="form-group">
                 <label>Position (CSS)</label>
-                <div class="pos-row">
-                  <input type="text" class="form-control pos-input" id="fPosition" placeholder="e.g. center 50%"
-                    oninput="updatePreview()">
-                  <select class="form-control pos-select" id="fPosHelper" onchange="applyPosHelper()">
-                    <option value="">Suggested</option>
-                    <option value="center top">Top</option>
-                    <option value="center">Center</option>
-                    <option value="center 10%">10%</option>
-                    <option value="center 20%">20%</option>
-                    <option value="center 30%">30%</option>
-                    <option value="center 40%">40%</option>
-                    <option value="center 50%">50%</option>
-                    <option value="center 60%">60%</option>
-                    <option value="center 70%">70%</option>
-                    <option value="center 80%">80%</option>
-                    <option value="center 90%">90%</option>
-                    <option value="center 100%">100%</option>
-                  </select>
-                </div>
+                <input type="text" class="form-control" id="fPosition" placeholder="e.g. center 50%"
+                  oninput="updatePreview(); updateSliderFromInput();">
               </div>
             </div>
 
