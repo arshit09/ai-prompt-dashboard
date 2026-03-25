@@ -7,6 +7,31 @@ let editIdx = null;    // null = add, number = edit
 let deleteIdx = null;
 let unsaved = false;
 
+// ── Session State (survives refresh) ─────────────────
+const SESSION_KEY = 'promptDashboardSession';
+
+function saveSessionState() {
+    const state = {
+        searchQuery: document.getElementById('searchInput')?.value || '',
+        genderFilter: document.getElementById('genderFilter')?.value || '',
+        scrollTop: document.getElementById('gridWrapper')?.scrollTop || window.scrollY
+    };
+    sessionStorage.setItem(SESSION_KEY, JSON.stringify(state));
+}
+
+function restoreSessionState() {
+    try {
+        const raw = sessionStorage.getItem(SESSION_KEY);
+        if (!raw) return;
+        const state = JSON.parse(raw);
+        if (state.searchQuery) document.getElementById('searchInput').value = state.searchQuery;
+        if (state.genderFilter) document.getElementById('genderFilter').value = state.genderFilter;
+        if (state.scrollTop) {
+            requestAnimationFrame(() => window.scrollTo(0, state.scrollTop));
+        }
+    } catch (e) { /* ignore */ }
+}
+
 // ── Persistence (IndexedDB) ──────────────────────────
 const DB_NAME = 'PromptDashboardDB';
 const STORE_NAME = 'handles';
@@ -309,6 +334,7 @@ function renderTable() {
         }).forceRender();
         setTimeout(applyDataPos, 100);
     }
+    saveSessionState();
 }
 
 function attachRowClickListener() {
@@ -568,8 +594,9 @@ document.addEventListener('keydown', e => {
     }
 });
 
-// Warn on close if unsaved
+// Warn on close if unsaved & persist session state
 window.addEventListener('beforeunload', e => {
+    saveSessionState();
     if (unsaved) { e.preventDefault(); e.returnValue = ''; }
 });
 
@@ -618,6 +645,7 @@ window.addEventListener('DOMContentLoaded', async () => {
                 document.getElementById('gridWrapper').classList.remove('hidden');
                 document.getElementById('toolbar').classList.remove('hidden');
                 document.getElementById('addBtn').disabled = false;
+                restoreSessionState();
                 renderTable();
 
                 const status = document.getElementById('fileStatus');
