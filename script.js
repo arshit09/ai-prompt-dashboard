@@ -513,6 +513,7 @@ function confirmDelete() {
     closeDelete();
     renderTable();
     toast(`Entry #${id} deleted`);
+    saveFile();
 }
 
 // ── Helpers ───────────────────────────────────────────
