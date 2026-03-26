@@ -326,13 +326,40 @@ function renderTable() {
             }
         }).render(document.getElementById("gridWrapper"));
 
+        // Scroll to top when pagination page changes
+        const wrapper = document.getElementById('gridWrapper');
+        wrapper.addEventListener('click', (e) => {
+            if (e.target.closest('.gridjs-pages button')) {
+                wrapper.scrollIntoView({ behavior: 'smooth', block: 'start' });
+            }
+        });
+
         // Attach row click via DOM delegation after render
         attachRowClickListener();
     } else {
+        // Remember current pagination page before re-render
+        const currentPageBtn = document.querySelector('.gridjs-pages button.gridjs-currentPage');
+        const currentPage = currentPageBtn ? parseInt(currentPageBtn.textContent, 10) : null;
+
         grid.updateConfig({
             data: gridData
         }).forceRender();
-        setTimeout(applyDataPos, 100);
+
+        // Restore pagination page after re-render
+        if (currentPage && currentPage > 1) {
+            setTimeout(() => {
+                const pageBtns = document.querySelectorAll('.gridjs-pages button');
+                for (const btn of pageBtns) {
+                    if (parseInt(btn.textContent, 10) === currentPage && !btn.classList.contains('gridjs-currentPage')) {
+                        btn.click();
+                        break;
+                    }
+                }
+                setTimeout(applyDataPos, 100);
+            }, 100);
+        } else {
+            setTimeout(applyDataPos, 100);
+        }
     }
     saveSessionState();
 }
