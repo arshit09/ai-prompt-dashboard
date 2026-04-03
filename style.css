@@ -586,6 +586,39 @@ select.form-control {
   cursor: pointer;
 }
 
+.source-with-inspired {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+}
+.source-with-inspired .form-control {
+  flex: 1;
+}
+.checkbox-label {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  cursor: pointer;
+  font-size: 0.8rem;
+  color: var(--text-secondary);
+  font-weight: 500;
+  white-space: nowrap;
+  user-select: none;
+}
+.checkbox-label input[type="checkbox"] {
+  width: 16px;
+  height: 16px;
+  cursor: pointer;
+  filter: grayscale(1);
+}
+body.dark-mode .checkbox-label input[type="checkbox"] {
+  filter: invert(1) hue-rotate(180deg);
+}
+.checkbox-label input[type="checkbox"]:checked {
+  filter: none;
+  accent-color: var(--accent-color);
+}
+
 /* Image preview in modal (Portrait Scale) */
 .preview-container {
   display: flex;

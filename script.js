@@ -200,7 +200,15 @@ function serializeEntry(item) {
     if (!item.source) {
         p.push(`    source: null`);
     } else {
-        p.push(`    source: {\n      url: "${escStr(item.source.url || '')}"\n    }`);
+        const s = [];
+        // Only include URL if it exists as a property
+        if ('url' in item.source) {
+            s.push(`      url: "${escStr(item.source.url || '')}"`);
+        }
+        if (item.source.inspired) {
+            s.push(`      inspired: true`);
+        }
+        p.push(`    source: {\n${s.join(',\n')}\n    }`);
     }
 
     if (item.position) {
@@ -255,7 +263,8 @@ function renderTable() {
             || (item.prompt || '').toLowerCase().includes(q)
             || (item.gender || '').toLowerCase().includes(q)
             || (item.date || '').toLowerCase().includes(q)
-            || (item.source && item.source.url && item.source.url.toLowerCase().includes(q));
+            || (item.source && item.source.url && item.source.url.toLowerCase().includes(q))
+            || (item.source && item.source.inspired && 'inspired'.includes(q));
         return matchG && matchQ;
     });
 
@@ -268,6 +277,7 @@ function renderTable() {
         const realIdx = data.indexOf(item);
         const promptPreview = (item.prompt || '').slice(0, 500) + ((item.prompt || '').length > 500 ? '\u2026' : '');
         const sourceText = item.source ? (item.source.url || '') : '';
+        const sourceLabel = item.source && item.source.inspired ? `\u2728 ${sourceText}` : sourceText;
         const posText = item.position || '';
         const posAttr = item.position ? `data-pos="${escHtml(item.position)}"` : '';
 
@@ -284,7 +294,7 @@ function renderTable() {
             gridjs.html(`<div class="cell-prompt" title="${escHtml(item.prompt || '')}">${escHtml(promptPreview)}</div>`),
             gridjs.html(`<span class="badge badge-${item.gender || 'female'}">${item.gender || ''}</span>`),
             gridjs.html(`<span class="cell-muted">${escHtml(item.date || '')}</span>`),
-            gridjs.html(`<span class="cell-muted" title="${escHtml(sourceText)}">${escHtml(sourceText)}</span>`),
+            gridjs.html(`<span class="cell-muted" title="${escHtml(sourceText)}">${escHtml(sourceLabel)}</span>`),
             gridjs.html(`<span class="cell-pos">${escHtml(posText)}</span>`),
             gridjs.html(`
                 <div class="actions">
@@ -408,6 +418,7 @@ function showAddModal() {
     document.getElementById('fGender').value = 'female';
     document.getElementById('fDate').value = todayStr();
     document.getElementById('fSource').value = '';
+    document.getElementById('fInspired').checked = false;
     document.getElementById('fPosition').value = 'center 50%';
     updateSliderFromPosition('center 50%');
     document.getElementById('fImageUrl').value = '';
@@ -427,6 +438,7 @@ function showEditModal(idx) {
     document.getElementById('fGender').value = item.gender || 'female';
     document.getElementById('fDate').value = item.date || '';
     document.getElementById('fSource').value = item.source ? (item.source.url || '') : '';
+    document.getElementById('fInspired').checked = item.source ? !!item.source.inspired : false;
     document.getElementById('fPosition').value = item.position || '';
     updateSliderFromPosition(item.position || '');
     document.getElementById('fImageUrl').value = item.imageUrl || '';
@@ -498,6 +510,7 @@ function saveEntry() {
     const date = document.getElementById('fDate').value.trim();
     const gender = document.getElementById('fGender').value;
     const srcVal = document.getElementById('fSource').value.trim();
+    const isInspired = document.getElementById('fInspired').checked;
     const position = document.getElementById('fPosition').value.trim();
 
     if (!id || isNaN(id)) { toast('ID is required', true); return; }
@@ -510,7 +523,12 @@ function saveEntry() {
         return;
     }
 
-    const source = srcVal ? { url: srcVal } : null;
+    let source = null;
+    if (srcVal || isInspired) {
+        source = {};
+        if (srcVal) source.url = srcVal;
+        if (isInspired) source.inspired = true;
+    }
 
     const entry = { id, prompt, imageUrl, gender, source };
 
