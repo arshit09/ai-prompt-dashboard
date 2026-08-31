@@ -116,7 +116,7 @@ async function openFile() {
 
         // 2. Otherwise/Fallback: Picker
         const [handle] = await window.showOpenFilePicker({
-            types: [{ description: 'JavaScript File', accept: { 'text/javascript': ['.js'] } }],
+            types: [{ description: 'JSON File', accept: { 'application/json': ['.json'] } }],
         });
         await loadFileFromHandle(handle);
     } catch (e) {
@@ -145,22 +145,20 @@ async function saveFile() {
 
 function downloadFallback() {
     const content = serialize(data);
-    const blob = new Blob([content], { type: 'text/javascript' });
+    const blob = new Blob([content], { type: 'application/json' });
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
-    a.href = url; a.download = fileHandle ? fileHandle.name : 'data.js';
+    a.href = url; a.download = fileHandle ? fileHandle.name : 'data.json';
     a.click();
     URL.revokeObjectURL(url);
     toast('Direct write blocked — file downloaded instead.');
 }
 
-// ── Parse data.js ────────────────────────────────────
+// ── Parse data.json ──────────────────────────────────
 function parseFile(text) {
     try {
-        // Execute the file content and return the galleryData variable
-        const fn = new Function(text + '\n; return galleryData;');
-        const result = fn();
-        if (!Array.isArray(result)) throw new Error('galleryData is not an array');
+        const result = JSON.parse(text);
+        if (!Array.isArray(result)) throw new Error('data.json does not contain an array');
         return result;
     } catch (e) {
         toast('Parse error: ' + e.message, true);
@@ -169,58 +167,39 @@ function parseFile(text) {
     }
 }
 
-// ── Serialize back to JS ─────────────────────────────
-function escTpl(s) {
-    // Escape for use inside template literal
-    if (s === null || s === undefined) return '';
-    return String(s)
-        .replace(/\\/g, '\\\\')
-        .replace(/`/g, '\\`')
-        .replace(/\$\{/g, '\\${');
-}
+// ── Serialize back to JSON ───────────────────────────
+/**
+ * One entry in the canonical field order, with the defaults the gallery has
+ * always been written with. A bare JSON.stringify would emit whatever order an
+ * object happened to be built in, and would drop the `gender` fallback.
+ */
+function normalizeEntry(item) {
+    const out = {
+        id: item.id,
+        prompt: item.prompt,
+        imageUrl: item.imageUrl || '',
+    };
 
-function escStr(s) {
-    // Escape for use inside double-quoted string
-    if (s === null || s === undefined) return '';
-    return String(s).replace(/\\/g, '\\\\').replace(/"/g, '\\"');
-}
+    if ('date' in item) out.date = item.date || null;
 
-function serializeEntry(item) {
-    const p = [];
-    p.push(`    id: ${item.id}`);
-    p.push(`    prompt: \`${escTpl(item.prompt)}\``);
-    p.push(`    imageUrl: "${escStr(item.imageUrl || '')}"`);
-
-    if ('date' in item) {
-        p.push(`    date: ${!item.date ? 'null' : `"${item.date}"`}`);
-    }
-
-    p.push(`    gender: "${item.gender || 'female'}"`);
+    out.gender = item.gender || 'female';
 
     if (!item.source) {
-        p.push(`    source: null`);
+        out.source = null;
     } else {
-        const s = [];
+        out.source = {};
         // Only include URL if it exists as a property
-        if ('url' in item.source) {
-            s.push(`      url: "${escStr(item.source.url || '')}"`);
-        }
-        if (item.source.inspired) {
-            s.push(`      inspired: true`);
-        }
-        p.push(`    source: {\n${s.join(',\n')}\n    }`);
+        if ('url' in item.source) out.source.url = item.source.url || '';
+        if (item.source.inspired) out.source.inspired = true;
     }
 
-    if (item.position) {
-        p.push(`    position: "${escStr(item.position)}"`);
-    }
+    if (item.position) out.position = item.position;
 
-    return `  {\n${p.join(',\n')}\n  }`;
+    return out;
 }
 
 function serialize(arr) {
-    const header = '// AI Prompt Gallery Data\n// Each object represents an AI-generated image with its prompt and metadata\n\nconst galleryData = [\n';
-    return header + arr.map(serializeEntry).join(',\n') + '\n];\n';
+    return JSON.stringify(arr.map(normalizeEntry), null, 2) + '\n';
 }
 
 // ── UI Setup ─────────────────────────────────────────
